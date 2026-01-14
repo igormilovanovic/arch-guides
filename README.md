@@ -18,3 +18,5 @@
 | Windsurf/Codeium | Project rules file |
 
 Now your AI assistants will generate code following your architecture. 🎯
+
+You want to use it as human?! You can support this work by purchasing a PDF version as CheatSheet here https://tnkng.gumroad.com/l/ArchitectureCheatSheet. Thank you!
