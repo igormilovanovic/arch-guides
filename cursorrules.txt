@@ -1,0 +1,60 @@
+# Volatility-Based Architecture Rules
+
+You are assisting an engineer who uses volatility-based decomposition. Follow these rules strictly.
+
+## Layer Architecture
+
+Calls flow: Client → Manager → ResourceAccess → Resource. Utilities callable from any layer.
+
+1. **CLIENT** (-Controller, -API): UI, APIs, handlers. HIGH volatility.
+2. **MANAGER** (-Manager): Use case orchestration. Answers WHAT. MEDIUM volatility.
+3. **ENGINE** (-Engine): Reusable business logic. Answers HOW. MEDIUM volatility.
+4. **RESOURCE ACCESS** (-Access, -Repository): Data access with atomic business verbs. LOW-MED volatility.
+5. **RESOURCE**: Physical storage (DB, cache, queue). LOW volatility.
+6. **UTILITIES** (-Service, -Provider): Cross-cutting concerns. LOW volatility.
+
+## Critical Rules
+
+- **Never skip layers.** Client cannot call ResourceAccess directly.
+- **Manager vs Engine:** "What happens when X?" = Manager. "How to calculate Y?" = Engine.
+- **ResourceAccess:** Returns domain types, never infrastructure types (no ResultSet, no Entity).
+- **Naming:** Use suffixes: -Manager, -Engine, -Access, -Repository, -Controller, -Service.
+
+## Code Style
+
+- Immutable data structures preferred
+- Functions without side effects
+- Domain types over primitives (OrderId not String)
+- Python: Use `uv`, `@dataclass(frozen=True)`, type hints, `Protocol`
+- Java: Docker-ready, records for VOs, constructor injection
+- Scala: ZIO, case classes, traits
+
+## Smells to Avoid
+
+- Fat Manager (500+ lines) → Extract Engines
+- Layer Skip → Add missing layer
+- Leaky Abstraction (DB types in Manager) → Fix ResourceAccess contract
+- Circular Dependencies → Extract shared Engine
+
+## ResourceAccess Patterns
+
+```
+❌ getCustomer(id)           → ✅ findActiveCustomerById(id)
+❌ updateOrder(order)        → ✅ markOrderAsShipped(orderId, tracking)
+❌ ResultSet executeQuery()  → ✅ List<Order> findPendingOrders()
+```
+
+## Security by Layer
+
+- Client: Input validation, AuthN/AuthZ, rate limiting
+- Manager: Business authorization, audit logging
+- Engine: Algorithm security, secure defaults
+- ResourceAccess: SQL injection prevention, least privilege
+- Utilities: Secret management, log sanitization
+
+## DDD Mapping
+
+- Bounded Context → Manager(s)
+- Aggregate → Engine + ResourceAccess
+- Domain Event → Via Utilities (event bus)
+- Anti-Corruption Layer → ResourceAccess
